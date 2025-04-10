@@ -39,7 +39,7 @@ const ExerciseCounter = ({ exercise, count, state }) => {
       <div className="exercise-name">
         {exercise}
       </div>
-      <div className={counter-display ${animation}}>
+      <div className={`counter-display ${animation}`}>
         <span className="count-number">{count}</span>
         <span className="count-label">REPS</span>
       </div>
