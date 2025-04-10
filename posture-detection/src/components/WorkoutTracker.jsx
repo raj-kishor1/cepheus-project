@@ -44,3 +44,32 @@ const POSE_LANDMARKS = {
     LEFT_FOOT_INDEX: 31,
     RIGHT_FOOT_INDEX: 32
   };
+// Convert the object to a lookup array for index to name conversion
+  const LANDMARK_NAMES = Object.entries(POSE_LANDMARKS).reduce((acc, [name, index]) => {
+    acc[index] = name;
+    return acc;
+  }, []);
+  
+  const WorkoutTracker = () => {
+    const [poseLandmarker, setPoseLandmarker] = useState(null);
+    const [webcamRunning, setWebcamRunning] = useState(false);
+    const [currentExercise, setCurrentExercise] = useState(EXERCISES.SQUAT);
+    const [repCount, setRepCount] = useState(0);
+    const [exerciseState, setExerciseState] = useState('ready'); // ready, up, down
+    const [feedback, setFeedback] = useState('');
+    
+    // State for storing landmarks
+    const [currentLandmarks, setCurrentLandmarks] = useState(null);
+    const [showLandmarks, setShowLandmarks] = useState(false);
+    const [selectedLandmark, setSelectedLandmark] = useState(null);
+    const [showLandmarksOnVideo, setShowLandmarksOnVideo] = useState(true); // Always show landmarks on video
+    
+    const videoRef = useRef(null);
+    const canvasRef = useRef(null);
+    
+    // Previous landmarks for tracking movement
+    const prevLandmarksRef = useRef(null);
+    // Position history to track exercise motion
+    const positionHistoryRef = useRef([]);
+    const lastRepTimeRef = useRef(Date.now());
+    
