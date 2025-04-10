@@ -199,3 +199,26 @@ function updateExerciseStatus(landmarks) {
         landmarks[mpPose.POSE_LANDMARKS.LEFT_ANKLE],
         landmarks[mpPose.POSE_LANDMARKS.RIGHT_ANKLE]
     ];
+    
+    const avgVisibility = keypoints.reduce((sum, point) => sum + (point?.visibility || 0), 0) / keypoints.length;
+        
+    if (avgVisibility < 0.7) {
+        setExerciseStatus("Low visibility. Adjust lighting or position");
+        return;
+    }
+    
+    // Different statuses for different exercises based on pose
+    if (curlStage === "down") {
+        setExerciseStatus("Curl - Arm down ⬇️");
+    } else if (curlStage === "up") {
+        setExerciseStatus("Curl - Arm up ⬆️");
+    } else if (lastSquatPos === "down") {
+        setExerciseStatus("Squat - Going down ⬇️");
+    } else if (lastPushupPos === "down") {
+        setExerciseStatus("Pushup - Lowering ⬇️");
+    } else if (lastJumpingJackPos === "open") {
+        setExerciseStatus("Jumping Jack - Arms up ⬆️");
+    } else {
+        setExerciseStatus("Ready - Position detected ✓");
+    }
+}
