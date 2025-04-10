@@ -469,3 +469,157 @@ function countJumpingJacks(landmarks) {
       lastJumpingJackPos = "closed";
   }
 }
+// Function to count Alternate Toe Touch
+function countAlternateToeTouch(landmarks) {
+  const leftShoulder = landmarks[mpPose.POSE_LANDMARKS.LEFT_SHOULDER];
+  const rightShoulder = landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER];
+  const leftHip = landmarks[mpPose.POSE_LANDMARKS.LEFT_HIP];
+  const rightHip = landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP];
+  const leftWrist = landmarks[mpPose.POSE_LANDMARKS.LEFT_WRIST];
+  const rightWrist = landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST];
+  const leftAnkle = landmarks[mpPose.POSE_LANDMARKS.LEFT_ANKLE];
+  const rightAnkle = landmarks[mpPose.POSE_LANDMARKS.RIGHT_ANKLE];
+
+  if (!leftShoulder || !rightShoulder || !leftHip || !rightHip || 
+      !leftWrist || !rightWrist || !leftAnkle || !rightAnkle) return;
+
+  // Calculate positions in pixel coordinates
+  const canvasWidth = canvasRef.current.width;
+  const canvasHeight = canvasRef.current.height;
+
+  const leftWristPos = { x: leftWrist.x * canvasWidth, y: leftWrist.y * canvasHeight };
+  const rightWristPos = { x: rightWrist.x * canvasWidth, y: rightWrist.y * canvasHeight };
+  const leftAnklePos = { x: leftAnkle.x * canvasWidth, y: leftAnkle.y * canvasHeight };
+  const rightAnklePos = { x: rightAnkle.x * canvasWidth, y: rightAnkle.y * canvasHeight };
+
+  // Check if wrist is close to opposite ankle (toe touch position)
+  const leftWristToRightAnkleDistance = Math.sqrt(
+      Math.pow(leftWristPos.x - rightAnklePos.x, 2) + 
+      Math.pow(leftWristPos.y - rightAnklePos.y, 2)
+  );
+  const rightWristToLeftAnkleDistance = Math.sqrt(
+      Math.pow(rightWristPos.x - leftAnklePos.x, 2) + 
+      Math.pow(rightWristPos.y - leftAnklePos.y, 2)
+  );
+
+  const toeTouchThreshold = 50; // Distance threshold in pixels
+
+  // Alternate toe touch detection logic
+  if ((leftWristToRightAnkleDistance < toeTouchThreshold || 
+       rightWristToLeftAnkleDistance < toeTouchThreshold) && 
+      lastToeTouchPos === "up" && !toeTouchCooldown) {
+      setToeTouchCount(prev => prev + 1);
+      lastToeTouchPos = "down";
+      toeTouchCooldown = true;
+      setTimeout(() => toeTouchCooldown = false, 500);
+  } else if (leftWristToRightAnkleDistance > toeTouchThreshold && 
+             rightWristToLeftAnkleDistance > toeTouchThreshold && 
+             lastToeTouchPos === "down") {
+      lastToeTouchPos = "up";
+  }
+}
+
+// Helper function to calculate angle between three points
+function calculateAngle(p1, p2, p3) {
+  // Calculate vectors
+  const vector1 = [p1[0] - p2[0], p1[1] - p2[1]];
+  const vector2 = [p3[0] - p2[0], p3[1] - p2[1]];
+  
+  // Calculate dot product
+  const dotProduct = vector1[0] * vector2[0] + vector1[1] * vector2[1];
+  
+  // Calculate magnitudes
+  const magnitude1 = Math.sqrt(vector1[0] * vector1[0] + vector1[1] * vector1[1]);
+  const magnitude2 = Math.sqrt(vector2[0] * vector2[0] + vector2[1] * vector2[1]);
+  
+  // Calculate angle in radians and convert to degrees
+  const angleRadians = Math.acos(dotProduct / (magnitude1 * magnitude2));
+  const angleDegrees = angleRadians * (180 / Math.PI);
+  
+  return angleDegrees;
+}
+
+return (
+  <div>
+      <h1>Exercise Counter (Squats, Pushups, Jumping Jacks, Toe Touch, Curls)</h1>
+      <div style={{ position: 'relative' }}>
+          <video ref={videoRef} style={{ display: "none" }} autoPlay playsInline muted></video>
+          <canvas ref={canvasRef} style={{ width: "640px", height: "480px", border: "2px solid black" }}></canvas>
+          <div style={{ 
+              position: 'absolute', 
+              top: '10px', 
+              left: '10px', 
+              backgroundColor: 'rgba(0,0,0,0.5)',
+              color: 'white',
+              padding: '8px',
+              borderRadius: '4px'
+          }}>
+              <p style={{ margin: '0', fontWeight: 'bold' }}>Status: {exerciseStatus}</p>
+          </div>
+      </div>
+      
+      <div style={{ display: 'flex', justifyContent: 'space-around', marginTop: '20px' }}>
+          <div style={{ 
+              padding: '15px', 
+              backgroundColor: '#e0f7fa', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              width: '120px',
+              textAlign: 'center'
+          }}>
+              <h2 style={{ margin: '0 0 10px 0' }}>Squats</h2>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>{squatCount}</p>
+          </div>
+          
+          <div style={{ 
+              padding: '15px', 
+              backgroundColor: '#f0f4c3', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              width: '120px',
+              textAlign: 'center'
+          }}>
+              <h2 style={{ margin: '0 0 10px 0' }}>Pushups</h2>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>{pushupCount}</p>
+          </div>
+          
+          <div style={{ 
+              padding: '15px', 
+              backgroundColor: '#ffccbc', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              width: '120px',
+              textAlign: 'center'
+          }}>
+              <h2 style={{ margin: '0 0 10px 0' }}>Jumping Jacks</h2>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>{jumpingJackCount}</p>
+          </div>
+
+          <div style={{ 
+              padding: '15px', 
+              backgroundColor: '#c8e6c9', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              width: '120px',
+              textAlign: 'center'
+          }}>
+              <h2 style={{ margin: '0 0 10px 0' }}>Toe Touch</h2>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>{toeTouchCount}</p>
+          </div>
+          
+          <div style={{ 
+              padding: '15px', 
+              backgroundColor: '#bbdefb', 
+              borderRadius: '8px',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+              width: '120px',
+              textAlign: 'center'
+          }}>
+              <h2 style={{ margin: '0 0 10px 0' }}>Curls</h2>
+              <p style={{ fontSize: '36px', fontWeight: 'bold', margin: '0' }}>{curlCount}</p>
+          </div>
+      </div>
+  </div>
+);
+}
+export default App;
