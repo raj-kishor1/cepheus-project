@@ -72,4 +72,28 @@ const POSE_LANDMARKS = {
     // Position history to track exercise motion
     const positionHistoryRef = useRef([]);
     const lastRepTimeRef = useRef(Date.now());
-    
+    useEffect(() => {
+      // Import MediaPipe dynamically
+      const loadMediaPipe = async () => {
+        try {
+          const { PoseLandmarker, FilesetResolver, DrawingUtils } = await import("@mediapipe/tasks-vision");
+          window.PoseLandmarker = PoseLandmarker;
+          window.FilesetResolver = FilesetResolver;
+          window.DrawingUtils = DrawingUtils;
+          
+          createPoseLandmarker();
+        } catch (error) {
+          console.error("Error loading MediaPipe:", error);
+          setFeedback("Error loading AI model. Please check console for details.");
+        }
+      };
+      
+      loadMediaPipe();
+      
+      return () => {
+        if (videoRef.current && videoRef.current.srcObject) {
+          const tracks = videoRef.current.srcObject.getTracks();
+          tracks.forEach(track => track.stop());
+        }
+      };
+    }, []);
