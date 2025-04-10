@@ -333,3 +333,139 @@ function countSquats(landmarks) {
       lastSquatPos = "up";
   }
 }
+function countPushups(landmarks) {
+  const leftShoulder = landmarks[mpPose.POSE_LANDMARKS.LEFT_SHOULDER];
+  const rightShoulder = landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER];
+  const leftElbow = landmarks[mpPose.POSE_LANDMARKS.LEFT_ELBOW];
+  const rightElbow = landmarks[mpPose.POSE_LANDMARKS.RIGHT_ELBOW];
+  const leftWrist = landmarks[mpPose.POSE_LANDMARKS.LEFT_WRIST];
+  const rightWrist = landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST];
+  const leftHip = landmarks[mpPose.POSE_LANDMARKS.LEFT_HIP];
+  const rightHip = landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP];
+
+  if (!leftShoulder || !rightShoulder || !leftElbow || !rightElbow || 
+      !leftWrist || !rightWrist || !leftHip || !rightHip) return;
+
+  // Calculate positions in pixel coordinates
+  const canvasWidth = canvasRef.current.width;
+  const canvasHeight = canvasRef.current.height;
+  
+  const leftShoulderPos = { x: leftShoulder.x * canvasWidth, y: leftShoulder.y * canvasHeight };
+  const rightShoulderPos = { x: rightShoulder.x * canvasWidth, y: rightShoulder.y * canvasHeight };
+  const leftElbowPos = { x: leftElbow.x * canvasWidth, y: leftElbow.y * canvasHeight };
+  const rightElbowPos = { x: rightElbow.x * canvasWidth, y: rightElbow.y * canvasHeight };
+  const leftWristPos = { x: leftWrist.x * canvasWidth, y: leftWrist.y * canvasHeight };
+  const rightWristPos = { x: rightWrist.x * canvasWidth, y: rightWrist.y * canvasHeight };
+  const leftHipPos = { x: leftHip.x * canvasWidth, y: leftHip.y * canvasHeight };
+  const rightHipPos = { x: rightHip.x * canvasWidth, y: rightHip.y * canvasHeight };
+
+  // Calculate shoulder and hip positions
+  const avgShoulderY = (leftShoulderPos.y + rightShoulderPos.y) / 2;
+  const avgHipY = (leftHipPos.y + rightHipPos.y) / 2;
+
+  // Calculate elbow angles to detect pushup form
+  const leftElbowAngle = calculateAngle(
+      [leftShoulderPos.x, leftShoulderPos.y],
+      [leftElbowPos.x, leftElbowPos.y],
+      [leftWristPos.x, leftWristPos.y]
+  );
+  
+  const rightElbowAngle = calculateAngle(
+      [rightShoulderPos.x, rightShoulderPos.y],
+      [rightElbowPos.x, rightElbowPos.y],
+      [rightWristPos.x, rightWristPos.y]
+  );
+
+  const avgElbowAngle = (leftElbowAngle + rightElbowAngle) / 2;
+
+  // Pushup detection logic
+  const elbowAngleThreshold = 90; // Degrees - lower value means deeper pushup
+  const shoulderHipDistanceThreshold = 0.2; // Relative to shoulder width
+  
+  // Check if user is in pushup position (elbows bent significantly and shoulders lowered)
+  if (avgElbowAngle < elbowAngleThreshold && avgShoulderY > avgHipY && lastPushupPos === "up" && !pushupCooldown) {
+      // Valid pushup detected
+      setPushupCount(prev => prev + 1);
+      lastPushupPos = "down";
+      pushupCooldown = true;
+      setTimeout(() => pushupCooldown = false, 800);
+  } else if (avgElbowAngle > 160 && lastPushupPos === "down") {
+      // Standing up position detected
+      lastPushupPos = "up";
+  }
+}
+
+function countJumpingJacks(landmarks) {
+  const leftShoulder = landmarks[mpPose.POSE_LANDMARKS.LEFT_SHOULDER];
+  const rightShoulder = landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER];
+  const leftWrist = landmarks[mpPose.POSE_LANDMARKS.LEFT_WRIST];
+  const rightWrist = landmarks[mpPose.POSE_LANDMARKS.RIGHT_WRIST];
+  const leftAnkle = landmarks[mpPose.POSE_LANDMARKS.LEFT_ANKLE];
+  const rightAnkle = landmarks[mpPose.POSE_LANDMARKS.RIGHT_ANKLE];
+  const leftHip = landmarks[mpPose.POSE_LANDMARKS.LEFT_HIP];
+  const rightHip = landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP];
+
+  if (!leftShoulder || !rightShoulder || !leftWrist || !rightWrist || 
+      !leftAnkle || !rightAnkle || !leftHip || !rightHip) return;
+
+  // Calculate positions in pixel coordinates
+  const canvasWidth = canvasRef.current.width;
+  const canvasHeight = canvasRef.current.height;
+  
+  // Track wrists (hands) instead of shoulders for more accurate detection
+  const leftWristPos = { x: leftWrist.x * canvasWidth, y: leftWrist.y * canvasHeight };
+  const rightWristPos = { x: rightWrist.x * canvasWidth, y: rightWrist.y * canvasHeight };
+  const leftShoulderPos = { x: leftShoulder.x * canvasWidth, y: leftShoulder.y * canvasHeight };
+  const rightShoulderPos = { x: rightShoulder.x * canvasWidth, y: rightShoulder.y * canvasHeight };
+  const leftAnklePos = { x: leftAnkle.x * canvasWidth, y: leftAnkle.y * canvasHeight };
+  const rightAnklePos = { x: rightAnkle.x * canvasWidth, y: rightAnkle.y * canvasHeight };
+  const leftHipPos = { x: leftHip.x * canvasWidth, y: leftHip.y * canvasHeight };
+  const rightHipPos = { x: rightHip.x * canvasWidth, y: rightHip.y * canvasHeight };
+
+  // Calculate horizontal distance between feet
+  const feetDistance = Math.abs(leftAnklePos.x - rightAnklePos.x);
+  const hipDistance = Math.abs(leftHipPos.x - rightHipPos.x);
+  
+  // Normalize feet distance relative to hip width to account for different camera distances
+  const normalizedFeetDistance = feetDistance / hipDistance;
+  
+  // Calculate hands positions relative to shoulders
+  // In jumping jacks, hands go above shoulders
+  const leftHandAboveShoulder = leftWristPos.y < leftShoulderPos.y;
+  const rightHandAboveShoulder = rightWristPos.y < rightShoulderPos.y;
+  
+  // Calculate horizontal distance between hands
+  const handsDistance = Math.abs(leftWristPos.x - rightWristPos.x);
+  const shoulderDistance = Math.abs(leftShoulderPos.x - rightShoulderPos.x);
+  
+  // Hands should be wide apart in the "open" position
+  // Normalize to shoulder width to account for different body sizes
+  const normalizedHandsDistance = handsDistance / shoulderDistance;
+  
+  // Define thresholds for jumping jack detection
+  const feetApartThreshold = 1.5; // Feet should be wider than hip width
+  const handsApartThreshold = 1.8; // Hands should be wider than shoulder width
+  
+  // Check if in "open" position (hands up and feet apart)
+  const inOpenPosition = 
+      leftHandAboveShoulder && 
+      rightHandAboveShoulder && 
+      normalizedHandsDistance > handsApartThreshold && 
+      normalizedFeetDistance > feetApartThreshold;
+      
+  // Check if in "closed" position (hands down and feet together)
+  const inClosedPosition = 
+      !leftHandAboveShoulder && 
+      !rightHandAboveShoulder && 
+      normalizedFeetDistance < 1.2;
+  
+  // Count jumping jack when transitioning from closed to open position
+  if (inOpenPosition && lastJumpingJackPos === "closed" && !jumpingJackCooldown) {
+      setJumpingJackCount(prev => prev + 1);
+      lastJumpingJackPos = "open";
+      jumpingJackCooldown = true;
+      setTimeout(() => jumpingJackCooldown = false, 500);
+  } else if (inClosedPosition && lastJumpingJackPos === "open") {
+      lastJumpingJackPos = "closed";
+  }
+}
