@@ -46,3 +46,66 @@
     color: var(--dark-color);
     margin-bottom: 0.5rem;
   }
+  .landmark-summary {
+    font-size: 0.85rem;
+    color: #6b7280;
+  }
+  
+  .landmark-details {
+    margin-top: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .detail-section {
+    border-top: 1px solid #e5e7eb;
+    padding-top: 0.75rem;
+  }
+  
+  .detail-section h4 {
+    font-size: 0.9rem;
+    color: #4b5563;
+    margin-bottom: 0.5rem;
+  }
+  
+  .coordinate-item {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    margin-bottom: 0.25rem;
+  }
+  
+  .coord-label {
+    color: #6b7280;
+  }
+  
+  .coord-value {
+    font-family: monospace;
+    color: #1f2937;
+  }
+  
+  .landmark-toggle {
+    background-color: #4b5563;
+    color: white;
+    border: none;
+    padding: 0.75rem 1.5rem;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 500;
+    margin-left: 1rem;
+    transition: all 0.3s ease;
+  }
+  
+  .landmark-toggle:hover {
+    background-color: #374151;
+  }
+  
+  .landmark-toggle.active {
+    background-color: var(--secondary-color);
+  }
+  
+  .landmark-toggle:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
