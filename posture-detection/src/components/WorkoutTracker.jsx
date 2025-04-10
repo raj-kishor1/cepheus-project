@@ -680,3 +680,4 @@ const POSE_LANDMARKS = {
   };
   
   export default WorkoutTracker;
+  //end
