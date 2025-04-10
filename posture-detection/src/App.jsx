@@ -222,3 +222,114 @@ function updateExerciseStatus(landmarks) {
         setExerciseStatus("Ready - Position detected ✓");
     }
 }
+function drawKeypoints(landmarks, ctx) {
+  landmarks.forEach((point, index) => {
+      if (index < 33) {
+          ctx.beginPath();
+          ctx.arc(point.x * canvasRef.current.width, point.y * canvasRef.current.height, 5, 0, 2 * Math.PI);
+          ctx.fillStyle = "red";
+          ctx.fill();
+      }
+  });
+}
+
+// New function to count bicep curls (converted from Python code)
+function countCurls(landmarks, ctx) {
+  const leftShoulder = landmarks[mpPose.POSE_LANDMARKS.LEFT_SHOULDER];
+  const leftElbow = landmarks[mpPose.POSE_LANDMARKS.LEFT_ELBOW];
+  const leftWrist = landmarks[mpPose.POSE_LANDMARKS.LEFT_WRIST];
+  
+  if (!leftShoulder || !leftElbow || !leftWrist) return;
+  
+  // Get coordinates
+  const shoulder = [
+      leftShoulder.x * canvasRef.current.width,
+      leftShoulder.y * canvasRef.current.height
+  ];
+  const elbow = [
+      leftElbow.x * canvasRef.current.width,
+      leftElbow.y * canvasRef.current.height
+  ];
+  const wrist = [
+      leftWrist.x * canvasRef.current.width,
+      leftWrist.y * canvasRef.current.height
+  ];
+  
+  // Calculate angle
+  const angle = calculateAngle(shoulder, elbow, wrist);
+  
+  // Visualize angle
+  ctx.fillStyle = "white";
+  ctx.font = "16px Arial";
+  ctx.fillText(Math.round(angle), elbow[0], elbow[1]);
+  
+  // Curl counter logic
+  if (angle > 160 && curlStage !== "down") {
+      curlStage = "down";
+  }
+  if (angle < 30 && curlStage === "down" && !curlCooldown) {
+      curlStage = "up";
+      setCurlCount(prev => prev + 1);
+      curlCooldown = true;
+      setTimeout(() => curlCooldown = false, 500);
+  }
+}
+function countSquats(landmarks) {
+  const leftHip = landmarks[mpPose.POSE_LANDMARKS.LEFT_HIP];
+  const rightHip = landmarks[mpPose.POSE_LANDMARKS.RIGHT_HIP];
+  const leftKnee = landmarks[mpPose.POSE_LANDMARKS.LEFT_KNEE];
+  const rightKnee = landmarks[mpPose.POSE_LANDMARKS.RIGHT_KNEE];
+  const leftAnkle = landmarks[mpPose.POSE_LANDMARKS.LEFT_ANKLE];
+  const rightAnkle = landmarks[mpPose.POSE_LANDMARKS.RIGHT_ANKLE];
+  const leftShoulder = landmarks[mpPose.POSE_LANDMARKS.LEFT_SHOULDER];
+  const rightShoulder = landmarks[mpPose.POSE_LANDMARKS.RIGHT_SHOULDER];
+
+  if (!leftHip || !rightHip || !leftKnee || !rightKnee || !leftAnkle || !rightAnkle || 
+      !leftShoulder || !rightShoulder) return;
+
+  // Calculate joint positions in pixel coordinates
+  const avgHipY = ((leftHip.y + rightHip.y) / 2) * canvasRef.current.height;
+  const avgKneeY = ((leftKnee.y + rightKnee.y) / 2) * canvasRef.current.height;
+  const avgAnkleY = ((leftAnkle.y + rightAnkle.y) / 2) * canvasRef.current.height;
+  const avgShoulderY = ((leftShoulder.y + rightShoulder.y) / 2) * canvasRef.current.height;
+
+  // Calculate knee angle to detect proper squat form
+  const leftHipKneeAngle = calculateAngle(
+      [leftHip.x * canvasRef.current.width, leftHip.y * canvasRef.current.height],
+      [leftKnee.x * canvasRef.current.width, leftKnee.y * canvasRef.current.height],
+      [leftAnkle.x * canvasRef.current.width, leftAnkle.y * canvasRef.current.height]
+  );
+  
+  const rightHipKneeAngle = calculateAngle(
+      [rightHip.x * canvasRef.current.width, rightHip.y * canvasRef.current.height],
+      [rightKnee.x * canvasRef.current.width, rightKnee.y * canvasRef.current.height],
+      [rightAnkle.x * canvasRef.current.width, rightAnkle.y * canvasRef.current.height]
+  );
+
+  const avgKneeAngle = (leftHipKneeAngle + rightHipKneeAngle) / 2;
+  
+  // More accurate squat detection using both hip position and knee angle
+  // A proper squat should have:
+  // 1. Hip lowered below a certain point
+  // 2. Knee angle decreased significantly (more bent knees)
+  const kneeAngleThreshold = 120; // Degrees - lower value means deeper bend
+  const hipPositionThreshold = 0.2; // Relative to knee position
+  
+  const hipKneeDistance = avgKneeY - avgHipY;
+  const kneeAnkleDistance = avgAnkleY - avgKneeY;
+  
+  // Hip should lower to close to knee level for a proper squat
+  const hipLoweredEnough = hipKneeDistance < kneeAnkleDistance * hipPositionThreshold;
+  
+  // Check if user is in squat position (knees bent significantly and hips lowered)
+  if (avgKneeAngle < kneeAngleThreshold && hipLoweredEnough && lastSquatPos === "up" && !squatCooldown) {
+      // Valid squat detected
+      setSquatCount(prev => prev + 1);
+      lastSquatPos = "down";
+      squatCooldown = true;
+      setTimeout(() => squatCooldown = false, 800);
+  } else if (avgKneeAngle > 160 && lastSquatPos === "down") {
+      // Standing up position detected
+      lastSquatPos = "up";
+  }
+}
