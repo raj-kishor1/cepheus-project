@@ -1,42 +1,103 @@
-#root {
+/* Base styles for the app */
+.app {
   max-width: 1280px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   text-align: center;
+  font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+/* Header styling */
+.app-header {
+  background: linear-gradient(135deg, #1e88e5, #42a5f5);
+  color: #fff;
+  padding: 1.5rem 1rem;
+  border-radius: 8px;
+  margin-bottom: 1rem;
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
+.app-header h1 {
+  margin: 0;
+  font-size: 2.5rem;
 }
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.app-header p {
+  margin: 0.5rem 0 0;
+  font-size: 1.1rem;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Main content layout */
+.app-main {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2rem;
+  justify-content: center;
+}
+
+/* Video section styling */
+.video-section {
+  flex: 1 1 640px;
+  position: relative;
+}
+.video-container {
+  position: relative;
+  display: inline-block;
+  border: 2px solid #ddd;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.video-canvas {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+.status-overlay {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: rgba(0, 0, 0, 0.5);
+  color: #fff;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+}
+
+/* Dashboard (exercise counters) styling */
+.dashboard {
+  flex: 1 1 300px;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  justify-content: center;
+}
+.counter-card {
+  background: #f9f9f9;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+  width: 140px;
+  padding: 1rem;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.counter-card h2 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+  color: #333;
+}
+.counter {
+  margin: 0;
+  font-size: 2rem;
+  font-weight: bold;
+  color: #1e88e5;
+}
+
+/* Footer styling */
+.app-footer {
+  margin-top: 2rem;
+  font-size: 0.9rem;
+  color: #666;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .app-main {
+    flex-direction: column;
+    align-items: center;
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }
